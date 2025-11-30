@@ -11,12 +11,14 @@ A minimalist mobile application with email/password authentication. Built with E
 ## Project Structure
 
 ```
-├── api/                    # Backend API (Node.js + Express + MongoDB)
-│   ├── index.js           # Server entry point
-│   ├── models/            # MongoDB models
-│   ├── routes/            # API routes
-│   ├── middleware/        # Auth middleware
-│   └── scripts/           # Utility scripts (seed users)
+├── api/                    # Backend API (Node.js + Express + MongoDB + TypeScript)
+│   ├── src/
+│   │   ├── index.ts       # Server entry point
+│   │   ├── types/         # TypeScript type definitions
+│   │   ├── models/        # MongoDB models
+│   │   ├── routes/        # API routes
+│   │   ├── middleware/    # Auth middleware
+│   │   └── scripts/       # Utility scripts (seed users)
 ├── app/                   # Expo app screens
 ├── server/                # Frontend API functions
 │   ├── auth.ts           # Authentication functions
@@ -44,7 +46,7 @@ JWT_SECRET=your-super-secret-jwt-key
 
 Seed initial users (since there's no signup):
 ```bash
-node scripts/seedUser.js
+npm run seed
 ```
 
 Start the API server:
