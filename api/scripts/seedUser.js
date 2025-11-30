@@ -15,9 +15,16 @@ const MONGODB_URI =
 
 const seedUsers = [
   {
-    email: "admin@dtmagic.com",
-    password: "password123",
-    name: "Admin User",
+    email: "student@dtmagic.com",
+    password: "student123",
+    name: "John Student",
+    role: "student",
+  },
+  {
+    email: "faculty@dtmagic.com",
+    password: "faculty123",
+    name: "Dr. Jane Faculty",
+    role: "faculty",
   },
   // Add more users as needed
 ];

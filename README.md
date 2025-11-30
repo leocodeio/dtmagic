@@ -70,8 +70,20 @@ npx expo start
 ## Default Credentials
 
 After running the seed script, you can login with:
-- **Email**: admin@dtmagic.com
-- **Password**: password123
+
+**Student:**
+- **Email**: student@dtmagic.com
+- **Password**: student123
+
+**Faculty:**
+- **Email**: faculty@dtmagic.com
+- **Password**: faculty123
+
+## User Roles
+
+The app supports two user roles:
+- **student** - Student users
+- **faculty** - Faculty/teacher users
 
 ## API Endpoints
 
