@@ -36,11 +36,16 @@ axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
     if (error.response) {
+      const url = error.config?.url || "";
+      const isAuthEndpoint = url.includes("/auth/login");
+      
       // Handle specific error status codes
       switch (error.response.status) {
         case 401:
-          // Token expired or invalid - could trigger logout here
-          console.log("Unauthorized - token may be expired");
+          // Only log token expiry for non-auth endpoints
+          if (!isAuthEndpoint) {
+            console.log("Unauthorized - token may be expired");
+          }
           break;
         case 403:
           console.log("Forbidden - access denied");

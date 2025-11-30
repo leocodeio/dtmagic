@@ -1,0 +1,54 @@
+{
+  "events": [
+    {
+      "name": "Gaming Championship 2025",
+      "description": "Annual gaming tournament featuring popular multiplayer games",
+      "niche": "gaming",
+      "venue": "Computer Lab - Block A",
+      "date": "2025-12-15",
+      "time": "14:00",
+      "capacity": 50,
+      "isActive": true
+    },
+    {
+      "name": "Singing Competition",
+      "description": "Solo and duet singing competition for all students and faculty",
+      "niche": "singing",
+      "venue": "Auditorium",
+      "date": "2025-12-18",
+      "time": "16:00",
+      "capacity": 100,
+      "isActive": true
+    },
+    {
+      "name": "Dance Fiesta",
+      "description": "Group and solo dance performances showcasing various styles",
+      "niche": "dancing",
+      "venue": "Main Hall",
+      "date": "2025-12-20",
+      "time": "15:00",
+      "capacity": 80,
+      "isActive": true
+    },
+    {
+      "name": "Hackathon 2025",
+      "description": "24-hour coding marathon to build innovative solutions",
+      "niche": "coding",
+      "venue": "Innovation Lab - Block B",
+      "date": "2025-12-22",
+      "time": "09:00",
+      "capacity": 60,
+      "isActive": true
+    },
+    {
+      "name": "Retro Gaming Night",
+      "description": "Relive the classics with retro gaming sessions",
+      "niche": "gaming",
+      "venue": "Recreation Room",
+      "date": "2025-12-28",
+      "time": "18:00",
+      "capacity": 30,
+      "isActive": true
+    }
+  ]
+}

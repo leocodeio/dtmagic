@@ -1,22 +1,24 @@
 import express, { Response } from "express";
 import jwt from "jsonwebtoken";
 import { authenticateToken } from "../middleware/auth";
-import User from "../models/User";
+import Faculty from "../models/Faculty";
+import Student from "../models/Student";
 import {
-    AuthRequest,
-    ErrorResponse,
-    LoginBody,
-    LoginResponse,
-    LogoutResponse,
-    UserResponse,
-    VerifyResponse,
+  AuthRequest,
+  ErrorResponse,
+  LoginBody,
+  LoginResponse,
+  LogoutResponse,
+  UserPayload,
+  UserResponse,
+  VerifyResponse,
 } from "../types";
 
 const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
-// Login endpoint - No signup, only login with existing credentials
+// Login endpoint - Role-based login with separate tables
 router.post(
   "/login",
   async (
@@ -24,7 +26,7 @@ router.post(
     res: Response<LoginResponse | ErrorResponse>
   ): Promise<void> => {
     const body = req.body as LoginBody;
-    const { email, password } = body;
+    const { email, password, role } = body;
 
     // Validate input
     if (!email || !password) {
@@ -32,22 +34,48 @@ router.post(
       return;
     }
 
-    // Find user by email
-    const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) {
-      res.status(401).json({ error: "Invalid email or password" });
+    if (!role || (role !== "student" && role !== "faculty")) {
+      res.status(400).json({ error: "Valid role (student/faculty) is required" });
       return;
     }
 
-    // Check password
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      res.status(401).json({ error: "Invalid email or password" });
-      return;
+    let userPayload: UserPayload;
+
+    if (role === "student") {
+      // Find student by email
+      const student = await Student.findOne({ email: email.toLowerCase() });
+      if (!student) {
+        res.status(401).json({ error: "Invalid email or password" });
+        return;
+      }
+
+      // Check password
+      const isMatch = await student.comparePassword(password);
+      if (!isMatch) {
+        res.status(401).json({ error: "Invalid email or password" });
+        return;
+      }
+
+      userPayload = student.toStudentPayload();
+    } else {
+      // Find faculty by email
+      const faculty = await Faculty.findOne({ email: email.toLowerCase() });
+      if (!faculty) {
+        res.status(401).json({ error: "Invalid email or password" });
+        return;
+      }
+
+      // Check password
+      const isMatch = await faculty.comparePassword(password);
+      if (!isMatch) {
+        res.status(401).json({ error: "Invalid email or password" });
+        return;
+      }
+
+      userPayload = faculty.toFacultyPayload();
     }
 
     // Generate JWT token with user payload
-    const userPayload = user.toUserPayload();
     const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: "7d" });
 
     res.json({
@@ -66,20 +94,29 @@ router.get(
     req: AuthRequest,
     res: Response<UserResponse | ErrorResponse>
   ): Promise<void> => {
-    const userId = req.user?._id;
+    const user = req.user;
 
-    if (!userId) {
+    if (!user) {
       res.status(401).json({ error: "User not authenticated" });
       return;
     }
 
-    const user = await User.findById(userId);
-    if (!user) {
-      res.status(404).json({ error: "User not found" });
-      return;
+    // Fetch fresh data from the appropriate collection
+    if (user.role === "student") {
+      const student = await Student.findById(user._id);
+      if (!student) {
+        res.status(404).json({ error: "Student not found" });
+        return;
+      }
+      res.json({ user: student.toStudentPayload() });
+    } else {
+      const faculty = await Faculty.findById(user._id);
+      if (!faculty) {
+        res.status(404).json({ error: "Faculty not found" });
+        return;
+      }
+      res.json({ user: faculty.toFacultyPayload() });
     }
-
-    res.json({ user: user.toUserPayload() });
   }
 );
 

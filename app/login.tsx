@@ -1,22 +1,23 @@
-import { login } from "@/server/auth";
+import { login, UserRole } from "@/server/auth";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<UserRole>("student");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -27,7 +28,7 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      await login(email.trim(), password);
+      await login(email.trim(), password, role);
       router.replace("/(tabs)");
     } catch (error) {
       const message =
@@ -45,9 +46,50 @@ export default function LoginScreen() {
     >
       <View style={styles.innerContainer}>
         <Text style={styles.title}>DTMagic</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
+        <Text style={styles.subtitle}>Student-Faculty Engagement Platform</Text>
 
         <View style={styles.form}>
+          {/* Role Selector */}
+          <View style={styles.roleContainer}>
+            <Text style={styles.roleLabel}>I am a:</Text>
+            <View style={styles.roleButtons}>
+              <Pressable
+                style={[
+                  styles.roleButton,
+                  role === "student" && styles.roleButtonActive,
+                ]}
+                onPress={() => setRole("student")}
+                disabled={loading}
+              >
+                <Text
+                  style={[
+                    styles.roleButtonText,
+                    role === "student" && styles.roleButtonTextActive,
+                  ]}
+                >
+                  🎓 Student
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.roleButton,
+                  role === "faculty" && styles.roleButtonActive,
+                ]}
+                onPress={() => setRole("faculty")}
+                disabled={loading}
+              >
+                <Text
+                  style={[
+                    styles.roleButtonText,
+                    role === "faculty" && styles.roleButtonTextActive,
+                  ]}
+                >
+                  👨‍🏫 Faculty
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+
           <TextInput
             style={styles.input}
             placeholder="Email"
@@ -84,7 +126,9 @@ export default function LoginScreen() {
         </View>
 
         <Text style={styles.hint}>
-          Use your registered email and password to login
+          {role === "student"
+            ? "Demo: student@dtmagic.com / student123"
+            : "Demo: faculty@dtmagic.com / faculty123"}
         </Text>
       </View>
     </KeyboardAvoidingView>
@@ -112,10 +156,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
     marginBottom: 40,
+    textAlign: "center",
   },
   form: {
     width: "100%",
     maxWidth: 400,
+  },
+  roleContainer: {
+    marginBottom: 24,
+  },
+  roleLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  roleButtons: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  roleButton: {
+    flex: 1,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 16,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#ddd",
+  },
+  roleButtonActive: {
+    borderColor: "#007AFF",
+    backgroundColor: "#E3F2FD",
+  },
+  roleButtonText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#666",
+  },
+  roleButtonTextActive: {
+    color: "#007AFF",
   },
   input: {
     backgroundColor: "#fff",

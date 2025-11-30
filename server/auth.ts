@@ -15,12 +15,59 @@ import {
 /** User roles in the application */
 export type UserRole = "student" | "faculty";
 
-/** User data structure */
-export interface User {
+/** Event niche categories */
+export type EventNiche = "gaming" | "singing" | "dancing" | "coding";
+
+/** Base user data structure */
+interface BaseUser {
   _id: string;
   email: string;
-  name?: string;
-  role: UserRole;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Student user data structure */
+export interface StudentUser extends BaseUser {
+  role: "student";
+  rollNumber: string;
+  incentivePoints: number;
+}
+
+/** Faculty user data structure */
+export interface FacultyUser extends BaseUser {
+  role: "faculty";
+  employeeId: string;
+  department: string;
+}
+
+/** Combined user type */
+export type User = StudentUser | FacultyUser;
+
+/** Event data structure */
+export interface Event {
+  _id: string;
+  name: string;
+  description: string;
+  niche: EventNiche;
+  venue: string;
+  date: string;
+  time: string;
+  capacity: number;
+  isActive: boolean;
+  participantCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Participation data structure */
+export interface Participation {
+  _id: string;
+  eventId: string;
+  participantId: string;
+  participantType: UserRole;
+  selectedNiche: EventNiche;
+  status: "registered" | "attended" | "cancelled";
   createdAt: string;
   updatedAt: string;
 }
@@ -43,6 +90,32 @@ interface VerifyResponse {
   user: User;
 }
 
+/** Events list response from API */
+interface EventsResponse {
+  events: Event[];
+}
+
+/** Participation response from API */
+interface ParticipationResponse {
+  message: string;
+  participation: Participation;
+}
+
+/** Incentive response from API */
+interface IncentiveResponse {
+  incentivePoints: number;
+  participations: Participation[];
+}
+
+/** Leaderboard response from API */
+interface LeaderboardResponse {
+  leaderboard: {
+    name: string;
+    rollNumber: string;
+    incentivePoints: number;
+  }[];
+}
+
 /** Health check response from API */
 interface HealthResponse {
   status: string;
@@ -59,20 +132,23 @@ interface ApiErrorResponse {
 // ============================================
 
 /**
- * Login with email and password
+ * Login with email, password and role
  * @param email - User's email address
  * @param password - User's password
+ * @param role - User's role (student/faculty)
  * @returns Login response with token and user data
  * @throws Error if login fails
  */
 export async function login(
   email: string,
-  password: string
+  password: string,
+  role: UserRole
 ): Promise<LoginResponse> {
   try {
     const response = await axiosInstance.post<LoginResponse>("/api/auth/login", {
       email,
       password,
+      role,
     });
 
     const { token, user } = response.data;
@@ -173,5 +249,136 @@ export async function verifyToken(): Promise<User | null> {
     // Token is invalid or expired, clear session
     await clearSession();
     return null;
+  }
+}
+
+// ============================================
+// Events Functions
+// ============================================
+
+/**
+ * Get all active events
+ * @returns List of events
+ */
+export async function getEvents(): Promise<Event[]> {
+  try {
+    const response = await axiosInstance.get<EventsResponse>("/api/events");
+    return response.data.events;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      if (axiosError.response?.data?.error) {
+        throw new Error(axiosError.response.data.error);
+      }
+    }
+    throw new Error("Failed to fetch events");
+  }
+}
+
+/**
+ * Register for an event
+ * @param eventId - Event ID to register for
+ * @param selectedNiche - Selected niche category
+ * @returns Participation data
+ */
+export async function participateInEvent(
+  eventId: string,
+  selectedNiche: EventNiche
+): Promise<Participation> {
+  try {
+    const response = await axiosInstance.post<ParticipationResponse>(
+      `/api/events/${eventId}/participate`,
+      { selectedNiche }
+    );
+    return response.data.participation;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      if (axiosError.response?.data?.error) {
+        throw new Error(axiosError.response.data.error);
+      }
+    }
+    throw new Error("Failed to register for event");
+  }
+}
+
+/**
+ * Cancel participation in an event
+ * @param eventId - Event ID to cancel participation
+ */
+export async function cancelParticipation(eventId: string): Promise<void> {
+  try {
+    await axiosInstance.delete(`/api/events/${eventId}/participate`);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      if (axiosError.response?.data?.error) {
+        throw new Error(axiosError.response.data.error);
+      }
+    }
+    throw new Error("Failed to cancel participation");
+  }
+}
+
+/**
+ * Get user's participations
+ * @returns List of user's participations
+ */
+export async function getMyParticipations(): Promise<Participation[]> {
+  try {
+    const response = await axiosInstance.get<{ participations: Participation[] }>(
+      "/api/events/my/participations"
+    );
+    return response.data.participations;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      if (axiosError.response?.data?.error) {
+        throw new Error(axiosError.response.data.error);
+      }
+    }
+    throw new Error("Failed to fetch participations");
+  }
+}
+
+// ============================================
+// Incentives Functions
+// ============================================
+
+/**
+ * Get student's incentive points (students only)
+ * @returns Incentive data with points and participated events
+ */
+export async function getMyIncentives(): Promise<IncentiveResponse> {
+  try {
+    const response = await axiosInstance.get<IncentiveResponse>("/api/incentives/me");
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      if (axiosError.response?.data?.error) {
+        throw new Error(axiosError.response.data.error);
+      }
+    }
+    throw new Error("Failed to fetch incentive points");
+  }
+}
+
+/**
+ * Get leaderboard (top students by incentive points)
+ * @returns Leaderboard data
+ */
+export async function getLeaderboard(): Promise<LeaderboardResponse["leaderboard"]> {
+  try {
+    const response = await axiosInstance.get<LeaderboardResponse>("/api/incentives/leaderboard");
+    return response.data.leaderboard;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      if (axiosError.response?.data?.error) {
+        throw new Error(axiosError.response.data.error);
+      }
+    }
+    throw new Error("Failed to fetch leaderboard");
   }
 }

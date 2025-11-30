@@ -1,6 +1,6 @@
 import { NextFunction, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { AuthRequest, UserPayload } from "../types";
+import { AuthRequest, FacultyPayload, StudentPayload, UserPayload } from "../types";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
@@ -20,14 +20,32 @@ export function authenticateToken(
 
   const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload & UserPayload;
 
-  req.user = {
-    _id: decoded._id,
-    email: decoded.email,
-    name: decoded.name,
-    role: decoded.role,
-    createdAt: decoded.createdAt,
-    updatedAt: decoded.updatedAt,
-  };
+  // Reconstruct the appropriate payload based on role
+  if (decoded.role === "student") {
+    const studentPayload = decoded as JwtPayload & StudentPayload;
+    req.user = {
+      _id: studentPayload._id,
+      email: studentPayload.email,
+      name: studentPayload.name,
+      rollNumber: studentPayload.rollNumber,
+      role: "student",
+      incentivePoints: studentPayload.incentivePoints,
+      createdAt: studentPayload.createdAt,
+      updatedAt: studentPayload.updatedAt,
+    };
+  } else {
+    const facultyPayload = decoded as JwtPayload & FacultyPayload;
+    req.user = {
+      _id: facultyPayload._id,
+      email: facultyPayload.email,
+      name: facultyPayload.name,
+      employeeId: facultyPayload.employeeId,
+      department: facultyPayload.department,
+      role: "faculty",
+      createdAt: facultyPayload.createdAt,
+      updatedAt: facultyPayload.updatedAt,
+    };
+  }
 
   next();
 }

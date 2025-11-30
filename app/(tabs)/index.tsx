@@ -1,16 +1,13 @@
-import { getStoredUser, logout, User } from "@/server/auth";
-import { useRouter } from "expo-router";
+import { getStoredUser, User } from "@/server/auth";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Pressable,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 
 export default function DashboardScreen() {
-  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,11 +21,6 @@ export default function DashboardScreen() {
     setLoading(false);
   };
 
-  const handleLogout = async () => {
-    await logout();
-    router.replace("/login");
-  };
-
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -40,35 +32,28 @@ export default function DashboardScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.welcomeText}>Welcome back!</Text>
+        <Text style={styles.welcomeText}>
+          Welcome, {user?.name?.split(" ")[0] || "User"}!
+        </Text>
+        <Text style={styles.subtitle}>
+          {user?.role === "faculty"
+            ? "Ready to engage with students?"
+            : "Ready to participate in events?"}
+        </Text>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Profile</Text>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Name</Text>
-          <Text style={styles.value}>{user?.name || "N/A"}</Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Email</Text>
-          <Text style={styles.value}>{user?.email || "N/A"}</Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Role</Text>
-          <View style={styles.roleBadge}>
-            <Text style={styles.roleText}>
-              {user?.role === "faculty" ? "Faculty" : "Student"}
-            </Text>
-          </View>
+      {/* Main Engagement Icon */}
+      <View style={styles.mainContent}>
+        <View style={styles.engagementCircle}>
+          <Text style={styles.engagementIcon}>🎯</Text>
+          <Text style={styles.engagementLabel}>Engagement</Text>
+          <Text style={styles.engagementHint}>Tap the tab below</Text>
         </View>
       </View>
 
-      <Pressable style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutButtonText}>Sign Out</Text>
-      </Pressable>
+      <Text style={styles.footerText}>
+        Browse upcoming events and register your interest
+      </Text>
     </View>
   );
 }
@@ -86,69 +71,59 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
   },
   header: {
-    marginTop: 60,
-    marginBottom: 30,
+    marginTop: 80,
+    alignItems: "center",
+    marginBottom: 40,
   },
   welcomeText: {
     fontSize: 28,
     fontWeight: "bold",
     color: "#333",
+    textAlign: "center",
   },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 20,
-  },
-  infoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  label: {
+  subtitle: {
     fontSize: 16,
     color: "#666",
+    marginTop: 8,
+    textAlign: "center",
   },
-  value: {
-    fontSize: 16,
-    color: "#333",
-    fontWeight: "500",
-  },
-  roleBadge: {
-    backgroundColor: "#007AFF",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  roleText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "600",
-    textTransform: "capitalize",
-  },
-  logoutButton: {
-    backgroundColor: "#FF3B30",
-    borderRadius: 8,
-    padding: 16,
+  mainContent: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
-    marginTop: 30,
   },
-  logoutButtonText: {
+  engagementCircle: {
+    backgroundColor: "#007AFF",
+    borderRadius: 100,
+    padding: 40,
+    alignItems: "center",
+    width: 200,
+    height: 200,
+    justifyContent: "center",
+    shadowColor: "#007AFF",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  engagementIcon: {
+    fontSize: 64,
+    marginBottom: 12,
+  },
+  engagementLabel: {
     color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 22,
+    fontWeight: "700",
+  },
+  engagementHint: {
+    color: "rgba(255, 255, 255, 0.8)",
+    fontSize: 12,
+    marginTop: 8,
+  },
+  footerText: {
+    fontSize: 14,
+    color: "#888",
+    textAlign: "center",
+    marginBottom: 20,
   },
 });

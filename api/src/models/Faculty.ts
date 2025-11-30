@@ -1,20 +1,20 @@
 import bcrypt from "bcryptjs";
 import mongoose, { HydratedDocument, Model } from "mongoose";
-import { IUserDocument, UserPayload } from "../types";
+import { FacultyPayload, IFacultyDocument } from "../types";
 
-/** User instance methods */
-interface UserMethods {
+/** Faculty instance methods */
+interface FacultyMethods {
   comparePassword(candidatePassword: string): Promise<boolean>;
-  toUserPayload(): UserPayload;
+  toFacultyPayload(): FacultyPayload;
 }
 
-/** User model type with methods */
-type UserModel = Model<IUserDocument, object, UserMethods>;
+/** Faculty model type with methods */
+type FacultyModel = Model<IFacultyDocument, object, FacultyMethods>;
 
-/** Hydrated user document type */
-export type UserDocument = HydratedDocument<IUserDocument, UserMethods>;
+/** Hydrated faculty document type */
+export type FacultyDocument = HydratedDocument<IFacultyDocument, FacultyMethods>;
 
-const userSchema = new mongoose.Schema<IUserDocument, UserModel, UserMethods>(
+const facultySchema = new mongoose.Schema<IFacultyDocument, FacultyModel, FacultyMethods>(
   {
     email: {
       type: String,
@@ -30,13 +30,19 @@ const userSchema = new mongoose.Schema<IUserDocument, UserModel, UserMethods>(
     },
     name: {
       type: String,
+      required: true,
       trim: true,
     },
-    role: {
+    employeeId: {
       type: String,
-      enum: ["student", "faculty"] as const,
       required: true,
-      default: "student",
+      unique: true,
+      trim: true,
+    },
+    department: {
+      type: String,
+      required: true,
+      trim: true,
     },
   },
   {
@@ -46,13 +52,15 @@ const userSchema = new mongoose.Schema<IUserDocument, UserModel, UserMethods>(
       async comparePassword(candidatePassword: string): Promise<boolean> {
         return bcrypt.compare(candidatePassword, this.password);
       },
-      /** Convert document to UserPayload (safe for JWT and responses) */
-      toUserPayload(): UserPayload {
+      /** Convert document to FacultyPayload (safe for JWT and responses) */
+      toFacultyPayload(): FacultyPayload {
         return {
           _id: this._id.toString(),
           email: this.email,
           name: this.name,
-          role: this.role,
+          employeeId: this.employeeId,
+          department: this.department,
+          role: "faculty",
           createdAt: this.createdAt,
           updatedAt: this.updatedAt,
         };
@@ -62,7 +70,7 @@ const userSchema = new mongoose.Schema<IUserDocument, UserModel, UserMethods>(
 );
 
 // Hash password before saving
-userSchema.pre("save", async function (next) {
+facultySchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     return next();
   }
@@ -72,6 +80,6 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-const User = mongoose.model<IUserDocument, UserModel>("User", userSchema);
+const Faculty = mongoose.model<IFacultyDocument, FacultyModel>("Faculty", facultySchema);
 
-export default User;
+export default Faculty;

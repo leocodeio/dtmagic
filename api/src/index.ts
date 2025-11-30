@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import express, { NextFunction, Request, Response } from "express";
 import { connectDatabase } from "./config/database";
 import authRoutes from "./routes/auth";
+import eventRoutes from "./routes/events";
+import incentiveRoutes from "./routes/incentives";
 import { ErrorResponse, HealthResponse } from "./types";
 
 // Load environment variables
@@ -16,6 +18,8 @@ app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/events", eventRoutes);
+app.use("/api/incentives", incentiveRoutes);
 
 // Health check endpoint
 app.get(
