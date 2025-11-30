@@ -37,6 +37,12 @@ interface UserResponse {
   user: User;
 }
 
+/** Verify token response from API */
+interface VerifyResponse {
+  valid: boolean;
+  user: User;
+}
+
 /** Health check response from API */
 interface HealthResponse {
   status: string;
@@ -140,5 +146,32 @@ export async function checkApiHealth(): Promise<boolean> {
     return response.data.status === "ok";
   } catch {
     return false;
+  }
+}
+
+/**
+ * Verify if the stored token is still valid
+ * @returns User data if token is valid, null otherwise
+ */
+export async function verifyToken(): Promise<User | null> {
+  try {
+    const token = await getToken();
+    if (!token) {
+      return null;
+    }
+
+    const response = await axiosInstance.get<VerifyResponse>("/api/auth/verify");
+
+    if (response.data.valid) {
+      // Update stored user data with fresh data from server
+      await setUser(response.data.user);
+      return response.data.user;
+    }
+
+    return null;
+  } catch {
+    // Token is invalid or expired, clear session
+    await clearSession();
+    return null;
   }
 }

@@ -81,3 +81,9 @@ export interface UserResponse {
 export interface LogoutResponse {
   message: string;
 }
+
+/** Verify token response */
+export interface VerifyResponse {
+  valid: boolean;
+  user: UserPayload;
+}

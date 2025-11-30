@@ -9,6 +9,7 @@ import {
     LoginResponse,
     LogoutResponse,
     UserResponse,
+    VerifyResponse,
 } from "../types";
 
 const router = express.Router();
@@ -90,6 +91,23 @@ router.post(
     // In a stateless JWT setup, logout is handled client-side
     // This endpoint is for any server-side cleanup if needed
     res.json({ message: "Logout successful" });
+  }
+);
+
+// Verify token endpoint - Check if the token is still valid
+router.get(
+  "/verify",
+  authenticateToken,
+  (req: AuthRequest, res: Response<VerifyResponse | ErrorResponse>): void => {
+    if (!req.user) {
+      res.status(401).json({ error: "Invalid token" });
+      return;
+    }
+
+    res.json({
+      valid: true,
+      user: req.user,
+    });
   }
 );
 
