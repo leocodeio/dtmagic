@@ -1,14 +1,14 @@
-import { Ionicons } from "@expo/vector-icons";
 import { FacultyUser, getStoredUser, logout, StudentUser, User } from "@/server/auth";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 /** Type guard for Student user */
@@ -53,7 +53,7 @@ export default function ProfileScreen() {
     <ScrollView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Ionicons name="person-circle" size={24} color="#333" style={{ marginRight: 8 }} />
+        <Ionicons name="person-circle" size={24} color="#ECEDEE" style={{ marginRight: 8 }} />
         <Text style={styles.headerTitle}>Profile</Text>
       </View>
 
@@ -147,13 +147,13 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#151718",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#151718",
   },
   header: {
     flexDirection: "row",
@@ -162,19 +162,19 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 16,
-    backgroundColor: "#fff",
+    backgroundColor: "#1e2022",
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: "#333",
   },
   headerTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#333",
+    color: "#ECEDEE",
   },
   avatarSection: {
     alignItems: "center",
     paddingVertical: 32,
-    backgroundColor: "#fff",
+    backgroundColor: "#1e2022",
     marginBottom: 20,
   },
   avatar: {
@@ -194,11 +194,11 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#333",
+    color: "#ECEDEE",
     marginBottom: 8,
   },
   roleBadge: {
-    backgroundColor: "#E3F2FD",
+    backgroundColor: "#1a3a5c",
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 16,
@@ -209,20 +209,20 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: "#1e2022",
     marginHorizontal: 20,
     borderRadius: 12,
     padding: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#333",
+    color: "#ECEDEE",
     marginBottom: 16,
   },
   infoRow: {
@@ -231,15 +231,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: "#333",
   },
   label: {
     fontSize: 15,
-    color: "#666",
+    color: "#9BA1A6",
   },
   value: {
     fontSize: 15,
-    color: "#333",
+    color: "#ECEDEE",
     fontWeight: "500",
     maxWidth: "60%",
     textAlign: "right",

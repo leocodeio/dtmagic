@@ -1,22 +1,22 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import {
-    Event,
-    EventNiche,
-    getEvents,
-    getMyParticipations,
-    participateInEvent,
-    Participation,
+  Event,
+  EventNiche,
+  getEvents,
+  getMyParticipations,
+  participateInEvent,
+  Participation,
 } from "@/server/auth";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 const NICHE_INFO: Record<EventNiche, { icon: keyof typeof MaterialCommunityIcons.glyphMap; color: string }> = {
@@ -111,7 +111,7 @@ export default function EngagementTabScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Ionicons name="calendar" size={24} color="#333" style={{ marginRight: 8 }} />
+        <Ionicons name="calendar" size={24} color="#ECEDEE" style={{ marginRight: 8 }} />
         <Text style={styles.headerTitle}>Engagement</Text>
       </View>
 
@@ -167,7 +167,7 @@ export default function EngagementTabScreen() {
         }
       >
         <View style={styles.sectionHeader}>
-          <Ionicons name="calendar-outline" size={20} color="#333" />
+          <Ionicons name="calendar-outline" size={20} color="#ECEDEE" />
           <Text style={styles.sectionTitle}>Upcoming Events</Text>
         </View>
         <Text style={styles.sectionSubtitle}>
@@ -283,18 +283,18 @@ export default function EngagementTabScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#151718",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#151718",
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: "#666",
+    color: "#9BA1A6",
   },
   header: {
     flexDirection: "row",
@@ -303,14 +303,14 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 16,
-    backgroundColor: "#fff",
+    backgroundColor: "#1e2022",
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: "#333",
   },
   headerTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#333",
+    color: "#ECEDEE",
   },
   eventsContainer: {
     flex: 1,
@@ -319,12 +319,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#333",
+    color: "#ECEDEE",
     marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: 14,
-    color: "#666",
+    color: "#9BA1A6",
     marginBottom: 20,
   },
   sectionHeader: {
@@ -339,21 +339,21 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#666",
+    color: "#9BA1A6",
   },
   emptyStateSubtext: {
     fontSize: 14,
-    color: "#888",
+    color: "#6B7280",
     marginTop: 8,
   },
   eventCard: {
-    backgroundColor: "#fff",
+    backgroundColor: "#1e2022",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -398,12 +398,12 @@ const styles = StyleSheet.create({
   eventName: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#333",
+    color: "#ECEDEE",
     marginBottom: 8,
   },
   eventDescription: {
     fontSize: 14,
-    color: "#666",
+    color: "#9BA1A6",
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -423,22 +423,22 @@ const styles = StyleSheet.create({
   },
   eventDetailText: {
     fontSize: 13,
-    color: "#666",
+    color: "#9BA1A6",
   },
   eventFooter: {
     borderTopWidth: 1,
-    borderTopColor: "#eee",
+    borderTopColor: "#333",
     paddingTop: 12,
   },
   capacityText: {
     fontSize: 13,
-    color: "#888",
+    color: "#9BA1A6",
   },
   registrationsContainer: {
     marginTop: 12,
   },
   registrationCard: {
-    backgroundColor: "#E8F5E9",
+    backgroundColor: "#1a3d2e",
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
@@ -449,11 +449,11 @@ const styles = StyleSheet.create({
   registrationEventName: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#333",
+    color: "#ECEDEE",
   },
   registrationNiche: {
     fontSize: 14,
-    color: "#666",
+    color: "#9BA1A6",
     textTransform: "capitalize",
   },
   bottomSpacing: {
@@ -466,13 +466,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
     justifyContent: "center",
     alignItems: "center",
     zIndex: 100,
   },
   modal: {
-    backgroundColor: "#fff",
+    backgroundColor: "#1e2022",
     borderRadius: 16,
     padding: 24,
     width: "85%",
@@ -481,13 +481,13 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#333",
+    color: "#ECEDEE",
     textAlign: "center",
     marginBottom: 4,
   },
   modalSubtitle: {
     fontSize: 14,
-    color: "#666",
+    color: "#9BA1A6",
     textAlign: "center",
     marginBottom: 24,
   },
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cancelButtonText: {
-    color: "#666",
+    color: "#9BA1A6",
     fontSize: 16,
     fontWeight: "500",
   },

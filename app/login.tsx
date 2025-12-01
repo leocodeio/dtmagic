@@ -1,5 +1,5 @@
-import { Ionicons } from "@expo/vector-icons";
 import { login, UserRole } from "@/server/auth";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -155,7 +155,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#151718",
   },
   innerContainer: {
     flex: 1,
@@ -166,12 +166,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 36,
     fontWeight: "bold",
-    color: "#333",
+    color: "#ECEDEE",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: "#666",
+    color: "#9BA1A6",
     marginBottom: 40,
     textAlign: "center",
   },
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   roleLabel: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
+    color: "#ECEDEE",
     marginBottom: 12,
     textAlign: "center",
   },
@@ -195,34 +195,34 @@ const styles = StyleSheet.create({
   },
   roleButton: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#1e2022",
     borderRadius: 8,
     padding: 16,
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#ddd",
+    borderColor: "#333",
   },
   roleButtonActive: {
     borderColor: "#007AFF",
-    backgroundColor: "#E3F2FD",
+    backgroundColor: "#1a3a5c",
   },
   roleButtonText: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#666",
+    color: "#9BA1A6",
   },
   roleButtonTextActive: {
-    color: "#007AFF",
+    color: "#fff",
   },
   input: {
-    backgroundColor: "#fff",
+    backgroundColor: "#1e2022",
     borderRadius: 8,
     padding: 16,
     fontSize: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#ddd",
-    color: "#333",
+    borderColor: "#333",
+    color: "#ECEDEE",
   },
   button: {
     backgroundColor: "#007AFF",
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   hint: {
     marginTop: 40,
     fontSize: 14,
-    color: "#888",
+    color: "#9BA1A6",
     textAlign: "center",
   },
 });

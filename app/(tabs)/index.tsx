@@ -1,11 +1,11 @@
-import { Ionicons } from "@expo/vector-icons";
 import { getStoredUser, User } from "@/server/auth";
+import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 
 export default function DashboardScreen() {
@@ -62,14 +62,14 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#151718",
     padding: 20,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#151718",
   },
   header: {
     marginTop: 80,
@@ -79,12 +79,12 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#333",
+    color: "#ECEDEE",
     textAlign: "center",
   },
   subtitle: {
     fontSize: 16,
-    color: "#666",
+    color: "#9BA1A6",
     marginTop: 8,
     textAlign: "center",
   },
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 14,
-    color: "#888",
+    color: "#9BA1A6",
     textAlign: "center",
     marginBottom: 20,
   },
