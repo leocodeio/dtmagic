@@ -1,0 +1,70 @@
+name: Build and Deploy APK
+
+on:
+  push:
+    branches:
+      - deploy
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate native Android project
+        run: npx expo prebuild --platform android --clean
+
+      - name: Build APK with Gradle
+        working-directory: android
+        run: ./gradlew assembleRelease
+
+      - name: Rename APK
+        run: mv android/app/build/outputs/apk/release/app-release.apk dtmagic-release.apk
+
+      - name: Upload APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dtmagic-apk
+          path: dtmagic-release.apk
+          retention-days: 30
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Release v${{ github.run_number }}
+          body: |
+            ## DTMagic APK Release
+            
+            **Build:** #${{ github.run_number }}
+            **Commit:** ${{ github.sha }}
+            **Branch:** deploy
+            
+            ### Download
+            Download the APK from the assets below.
+          files: dtmagic-release.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
