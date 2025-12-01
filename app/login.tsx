@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { login, UserRole } from "@/server/auth";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -61,14 +62,22 @@ export default function LoginScreen() {
                 onPress={() => setRole("student")}
                 disabled={loading}
               >
-                <Text
-                  style={[
-                    styles.roleButtonText,
-                    role === "student" && styles.roleButtonTextActive,
-                  ]}
-                >
-                  🎓 Student
-                </Text>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Ionicons 
+                    name="school-outline" 
+                    size={18} 
+                    color={role === "student" ? "#fff" : "#007AFF"} 
+                    style={{ marginRight: 6 }} 
+                  />
+                  <Text
+                    style={[
+                      styles.roleButtonText,
+                      role === "student" && styles.roleButtonTextActive,
+                    ]}
+                  >
+                    Student
+                  </Text>
+                </View>
               </Pressable>
               <Pressable
                 style={[
@@ -78,14 +87,22 @@ export default function LoginScreen() {
                 onPress={() => setRole("faculty")}
                 disabled={loading}
               >
-                <Text
-                  style={[
-                    styles.roleButtonText,
-                    role === "faculty" && styles.roleButtonTextActive,
-                  ]}
-                >
-                  👨‍🏫 Faculty
-                </Text>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Ionicons 
+                    name="school" 
+                    size={18} 
+                    color={role === "faculty" ? "#fff" : "#007AFF"} 
+                    style={{ marginRight: 6 }} 
+                  />
+                  <Text
+                    style={[
+                      styles.roleButtonText,
+                      role === "faculty" && styles.roleButtonTextActive,
+                    ]}
+                  >
+                    Faculty
+                  </Text>
+                </View>
               </Pressable>
             </View>
           </View>

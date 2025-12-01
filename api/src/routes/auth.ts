@@ -25,64 +25,69 @@ router.post(
     req: AuthRequest,
     res: Response<LoginResponse | ErrorResponse>
   ): Promise<void> => {
-    const body = req.body as LoginBody;
-    const { email, password, role } = body;
+    try {
+      const body = req.body as LoginBody;
+      const { email, password, role } = body;
 
-    // Validate input
-    if (!email || !password) {
-      res.status(400).json({ error: "Email and password are required" });
-      return;
+      // Validate input
+      if (!email || !password) {
+        res.status(400).json({ error: "Email and password are required" });
+        return;
+      }
+
+      if (!role || (role !== "student" && role !== "faculty")) {
+        res.status(400).json({ error: "Valid role (student/faculty) is required" });
+        return;
+      }
+
+      let userPayload: UserPayload;
+
+      if (role === "student") {
+        // Find student by email
+        const student = await Student.findOne({ email: email.toLowerCase() });
+        if (!student) {
+          res.status(401).json({ error: "Invalid email or password" });
+          return;
+        }
+
+        // Check password
+        const isMatch = await student.comparePassword(password);
+        if (!isMatch) {
+          res.status(401).json({ error: "Invalid email or password" });
+          return;
+        }
+
+        userPayload = student.toStudentPayload();
+      } else {
+        // Find faculty by email
+        const faculty = await Faculty.findOne({ email: email.toLowerCase() });
+        if (!faculty) {
+          res.status(401).json({ error: "Invalid email or password" });
+          return;
+        }
+
+        // Check password
+        const isMatch = await faculty.comparePassword(password);
+        if (!isMatch) {
+          res.status(401).json({ error: "Invalid email or password" });
+          return;
+        }
+
+        userPayload = faculty.toFacultyPayload();
+      }
+
+      // Generate JWT token with user payload
+      const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: "7d" });
+
+      res.json({
+        message: "Login successful",
+        token,
+        user: userPayload,
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Server error during login" });
     }
-
-    if (!role || (role !== "student" && role !== "faculty")) {
-      res.status(400).json({ error: "Valid role (student/faculty) is required" });
-      return;
-    }
-
-    let userPayload: UserPayload;
-
-    if (role === "student") {
-      // Find student by email
-      const student = await Student.findOne({ email: email.toLowerCase() });
-      if (!student) {
-        res.status(401).json({ error: "Invalid email or password" });
-        return;
-      }
-
-      // Check password
-      const isMatch = await student.comparePassword(password);
-      if (!isMatch) {
-        res.status(401).json({ error: "Invalid email or password" });
-        return;
-      }
-
-      userPayload = student.toStudentPayload();
-    } else {
-      // Find faculty by email
-      const faculty = await Faculty.findOne({ email: email.toLowerCase() });
-      if (!faculty) {
-        res.status(401).json({ error: "Invalid email or password" });
-        return;
-      }
-
-      // Check password
-      const isMatch = await faculty.comparePassword(password);
-      if (!isMatch) {
-        res.status(401).json({ error: "Invalid email or password" });
-        return;
-      }
-
-      userPayload = faculty.toFacultyPayload();
-    }
-
-    // Generate JWT token with user payload
-    const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: "7d" });
-
-    res.json({
-      message: "Login successful",
-      token,
-      user: userPayload,
-    });
   }
 );
 
@@ -94,28 +99,33 @@ router.get(
     req: AuthRequest,
     res: Response<UserResponse | ErrorResponse>
   ): Promise<void> => {
-    const user = req.user;
+    try {
+      const user = req.user;
 
-    if (!user) {
-      res.status(401).json({ error: "User not authenticated" });
-      return;
-    }
-
-    // Fetch fresh data from the appropriate collection
-    if (user.role === "student") {
-      const student = await Student.findById(user._id);
-      if (!student) {
-        res.status(404).json({ error: "Student not found" });
+      if (!user) {
+        res.status(401).json({ error: "User not authenticated" });
         return;
       }
-      res.json({ user: student.toStudentPayload() });
-    } else {
-      const faculty = await Faculty.findById(user._id);
-      if (!faculty) {
-        res.status(404).json({ error: "Faculty not found" });
-        return;
+
+      // Fetch fresh data from the appropriate collection
+      if (user.role === "student") {
+        const student = await Student.findById(user._id);
+        if (!student) {
+          res.status(404).json({ error: "Student not found" });
+          return;
+        }
+        res.json({ user: student.toStudentPayload() });
+      } else {
+        const faculty = await Faculty.findById(user._id);
+        if (!faculty) {
+          res.status(404).json({ error: "Faculty not found" });
+          return;
+        }
+        res.json({ user: faculty.toFacultyPayload() });
       }
-      res.json({ user: faculty.toFacultyPayload() });
+    } catch (error) {
+      console.error("Get user error:", error);
+      res.status(500).json({ error: "Server error fetching user" });
     }
   }
 );

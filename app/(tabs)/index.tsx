@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { getStoredUser, User } from "@/server/auth";
 import { useEffect, useState } from "react";
 import {
@@ -45,7 +46,7 @@ export default function DashboardScreen() {
       {/* Main Engagement Icon */}
       <View style={styles.mainContent}>
         <View style={styles.engagementCircle}>
-          <Text style={styles.engagementIcon}>🎯</Text>
+          <Ionicons name="calendar" size={64} color="#fff" />
           <Text style={styles.engagementLabel}>Engagement</Text>
           <Text style={styles.engagementHint}>Tap the tab below</Text>
         </View>
@@ -106,14 +107,11 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 8,
   },
-  engagementIcon: {
-    fontSize: 64,
-    marginBottom: 12,
-  },
   engagementLabel: {
     color: "#fff",
     fontSize: 22,
     fontWeight: "700",
+    marginTop: 12,
   },
   engagementHint: {
     color: "rgba(255, 255, 255, 0.8)",

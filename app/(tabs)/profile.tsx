@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { FacultyUser, getStoredUser, logout, StudentUser, User } from "@/server/auth";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -18,7 +19,9 @@ function isStudentUser(user: User): user is StudentUser {
 /** Type guard for Faculty user */
 function isFacultyUser(user: User): user is FacultyUser {
   return user.role === "faculty";
-}export default function ProfileScreen() {
+}
+
+export default function ProfileScreen() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,7 +53,8 @@ function isFacultyUser(user: User): user is FacultyUser {
     <ScrollView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>👤 Profile</Text>
+        <Ionicons name="person-circle" size={24} color="#333" style={{ marginRight: 8 }} />
+        <Text style={styles.headerTitle}>Profile</Text>
       </View>
 
       {/* Avatar Section */}
@@ -61,9 +65,15 @@ function isFacultyUser(user: User): user is FacultyUser {
           </Text>
         </View>
         <Text style={styles.userName}>{user?.name || "User"}</Text>
-        <View style={styles.roleBadge}>
+        <View style={[styles.roleBadge, { flexDirection: "row", alignItems: "center" }]}>
+          <Ionicons 
+            name={user?.role === "faculty" ? "school" : "school-outline"} 
+            size={16} 
+            color="#007AFF" 
+            style={{ marginRight: 4 }} 
+          />
           <Text style={styles.roleText}>
-            {user?.role === "faculty" ? "👨‍🏫 Faculty" : "🎓 Student"}
+            {user?.role === "faculty" ? "Faculty" : "Student"}
           </Text>
         </View>
       </View>
@@ -73,18 +83,27 @@ function isFacultyUser(user: User): user is FacultyUser {
         <Text style={styles.cardTitle}>Account Information</Text>
 
         <View style={styles.infoRow}>
-          <Text style={styles.label}>📧 Email</Text>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Ionicons name="mail-outline" size={16} color="#666" style={{ marginRight: 4 }} />
+            <Text style={styles.label}>Email</Text>
+          </View>
           <Text style={styles.value}>{user?.email || "N/A"}</Text>
         </View>
 
         {user && isStudentUser(user) && (
           <>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>🎫 Roll Number</Text>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Ionicons name="id-card-outline" size={16} color="#666" style={{ marginRight: 4 }} />
+                <Text style={styles.label}>Roll Number</Text>
+              </View>
               <Text style={styles.value}>{user.rollNumber || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>⭐ Incentive Points</Text>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Ionicons name="star-outline" size={16} color="#666" style={{ marginRight: 4 }} />
+                <Text style={styles.label}>Incentive Points</Text>
+              </View>
               <View style={styles.pointsBadge}>
                 <Text style={styles.pointsText}>
                   {user.incentivePoints || 0}
@@ -97,11 +116,17 @@ function isFacultyUser(user: User): user is FacultyUser {
         {user && isFacultyUser(user) && (
           <>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>🏢 Employee ID</Text>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Ionicons name="business-outline" size={16} color="#666" style={{ marginRight: 4 }} />
+                <Text style={styles.label}>Employee ID</Text>
+              </View>
               <Text style={styles.value}>{user.employeeId || "N/A"}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.label}>📚 Department</Text>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Ionicons name="library-outline" size={16} color="#666" style={{ marginRight: 4 }} />
+                <Text style={styles.label}>Department</Text>
+              </View>
               <Text style={styles.value}>{user.department || "N/A"}</Text>
             </View>
           </>
@@ -109,8 +134,9 @@ function isFacultyUser(user: User): user is FacultyUser {
       </View>
 
       {/* Logout Button */}
-      <Pressable style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutButtonText}>🚪 Sign Out</Text>
+      <Pressable style={[styles.logoutButton, { flexDirection: "row", alignItems: "center", justifyContent: "center" }]} onPress={handleLogout}>
+        <Ionicons name="log-out-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+        <Text style={styles.logoutButtonText}>Sign Out</Text>
       </Pressable>
 
       <View style={styles.bottomSpacing} />
@@ -130,6 +156,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
   },
   header: {
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingTop: 60,

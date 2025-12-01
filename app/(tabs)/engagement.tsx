@@ -1,3 +1,4 @@
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import {
     Event,
     EventNiche,
@@ -18,11 +19,11 @@ import {
     View,
 } from "react-native";
 
-const NICHE_INFO: Record<EventNiche, { icon: string; color: string }> = {
-  gaming: { icon: "🎮", color: "#9C27B0" },
-  singing: { icon: "🎤", color: "#E91E63" },
-  dancing: { icon: "💃", color: "#FF5722" },
-  coding: { icon: "💻", color: "#2196F3" },
+const NICHE_INFO: Record<EventNiche, { icon: keyof typeof MaterialCommunityIcons.glyphMap; color: string }> = {
+  gaming: { icon: "gamepad-variant", color: "#9C27B0" },
+  singing: { icon: "microphone", color: "#E91E63" },
+  dancing: { icon: "human-female-dance", color: "#FF5722" },
+  coding: { icon: "code-braces", color: "#2196F3" },
 };
 
 export default function EngagementTabScreen() {
@@ -110,7 +111,8 @@ export default function EngagementTabScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>🎯 Engagement</Text>
+        <Ionicons name="calendar" size={24} color="#333" style={{ marginRight: 8 }} />
+        <Text style={styles.headerTitle}>Engagement</Text>
       </View>
 
       {/* Event Selection Modal */}
@@ -131,7 +133,7 @@ export default function EngagementTabScreen() {
                   onPress={() => handleRegister(niche)}
                   disabled={registering}
                 >
-                  <Text style={styles.nicheIcon}>{NICHE_INFO[niche].icon}</Text>
+                  <MaterialCommunityIcons name={NICHE_INFO[niche].icon} size={32} color="#fff" />
                   <Text style={styles.nicheLabel}>
                     {niche.charAt(0).toUpperCase() + niche.slice(1)}
                   </Text>
@@ -164,7 +166,10 @@ export default function EngagementTabScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <Text style={styles.sectionTitle}>📅 Upcoming Events</Text>
+        <View style={styles.sectionHeader}>
+          <Ionicons name="calendar-outline" size={20} color="#333" />
+          <Text style={styles.sectionTitle}>Upcoming Events</Text>
+        </View>
         <Text style={styles.sectionSubtitle}>
           Tap on an event to register your interest
         </Text>
@@ -194,12 +199,13 @@ export default function EngagementTabScreen() {
                       { backgroundColor: nicheInfo.color },
                     ]}
                   >
-                    <Text style={styles.nicheBadgeIcon}>{nicheInfo.icon}</Text>
+                    <MaterialCommunityIcons name={nicheInfo.icon} size={14} color="#fff" style={{ marginRight: 4 }} />
                     <Text style={styles.nicheBadgeText}>{event.niche}</Text>
                   </View>
                   {registered && (
-                    <View style={styles.registeredBadge}>
-                      <Text style={styles.registeredBadgeText}>✓ Registered</Text>
+                    <View style={[styles.registeredBadge, { flexDirection: "row", alignItems: "center" }]}>
+                      <Ionicons name="checkmark-circle" size={14} color="#fff" style={{ marginRight: 4 }} />
+                      <Text style={styles.registeredBadgeText}>Registered</Text>
                     </View>
                   )}
                 </View>
@@ -209,24 +215,25 @@ export default function EngagementTabScreen() {
 
                 <View style={styles.eventDetails}>
                   <View style={styles.eventDetailItem}>
-                    <Text style={styles.eventDetailIcon}>📍</Text>
+                    <Ionicons name="location-outline" size={14} color="#666" style={{ marginRight: 4 }} />
                     <Text style={styles.eventDetailText}>{event.venue}</Text>
                   </View>
                   <View style={styles.eventDetailItem}>
-                    <Text style={styles.eventDetailIcon}>📅</Text>
+                    <Ionicons name="calendar-outline" size={14} color="#666" style={{ marginRight: 4 }} />
                     <Text style={styles.eventDetailText}>
                       {formatDate(event.date)}
                     </Text>
                   </View>
                   <View style={styles.eventDetailItem}>
-                    <Text style={styles.eventDetailIcon}>⏰</Text>
+                    <Ionicons name="time-outline" size={14} color="#666" style={{ marginRight: 4 }} />
                     <Text style={styles.eventDetailText}>{event.time}</Text>
                   </View>
                 </View>
 
-                <View style={styles.eventFooter}>
+                <View style={[styles.eventFooter, { flexDirection: "row", alignItems: "center" }]}>
+                  <Ionicons name="people-outline" size={14} color="#888" style={{ marginRight: 4 }} />
                   <Text style={styles.capacityText}>
-                    👥 {event.participantCount || 0} / {event.capacity} spots
+                    {event.participantCount || 0} / {event.capacity} spots
                   </Text>
                 </View>
               </Pressable>
@@ -237,9 +244,10 @@ export default function EngagementTabScreen() {
         {/* My Registrations */}
         {participations.length > 0 && (
           <>
-            <Text style={[styles.sectionTitle, { marginTop: 32 }]}>
-              ✅ My Registrations
-            </Text>
+            <View style={[styles.sectionHeader, { marginTop: 32 }]}>
+              <Ionicons name="checkmark-done-circle" size={20} color="#4CAF50" />
+              <Text style={styles.sectionTitle}>My Registrations</Text>
+            </View>
             <View style={styles.registrationsContainer}>
               {participations.map((participation) => {
                 const event = events.find((e) => e._id === participation.eventId);
@@ -248,10 +256,17 @@ export default function EngagementTabScreen() {
                 return (
                   <View key={participation._id} style={styles.registrationCard}>
                     <Text style={styles.registrationEventName}>{event.name}</Text>
-                    <Text style={styles.registrationNiche}>
-                      {NICHE_INFO[participation.selectedNiche].icon}{" "}
-                      {participation.selectedNiche}
-                    </Text>
+                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                      <MaterialCommunityIcons 
+                        name={NICHE_INFO[participation.selectedNiche].icon} 
+                        size={16} 
+                        color={NICHE_INFO[participation.selectedNiche].color} 
+                        style={{ marginRight: 4 }} 
+                      />
+                      <Text style={styles.registrationNiche}>
+                        {participation.selectedNiche}
+                      </Text>
+                    </View>
                   </View>
                 );
               })}
@@ -282,6 +297,7 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   header: {
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingTop: 60,
@@ -310,6 +326,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     marginBottom: 20,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   emptyState: {
     alignItems: "center",
