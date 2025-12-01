@@ -7,6 +7,7 @@ import Student from "../models/Student";
 import {
     AuthRequest,
     ErrorResponse,
+    EventNiche,
     EventPayload,
     EventResponse,
     EventsResponse,
@@ -16,6 +17,120 @@ import {
 } from "../types";
 
 const router = express.Router();
+
+// Create a new event (faculty only)
+router.post(
+  "/",
+  authenticateToken,
+  async (
+    req: AuthRequest,
+    res: Response<EventResponse | ErrorResponse>
+  ): Promise<void> => {
+    try {
+      const user = req.user;
+
+      // Only faculty can create events
+      if (!user || user.role !== "faculty") {
+        res.status(403).json({ error: "Only faculty can create events" });
+        return;
+      }
+
+      const { name, description, niche, venue, date, time, capacity } = req.body as {
+        name: string;
+        description: string;
+        niche: EventNiche;
+        venue: string;
+        date: string;
+        time: string;
+        capacity: number;
+      };
+
+      // Validate required fields
+      if (!name || !description || !niche || !venue || !date || !time || !capacity) {
+        res.status(400).json({ error: "All fields are required" });
+        return;
+      }
+
+      const event = new Event({
+        name,
+        description,
+        niche,
+        venue,
+        date: new Date(date),
+        time,
+        capacity,
+        isActive: true,
+      });
+
+      await event.save();
+
+      res.status(201).json({ event: event.toEventPayload(0) });
+    } catch (error) {
+      console.error("Error creating event:", error);
+      res.status(500).json({ error: "Failed to create event" });
+    }
+  }
+);
+
+// Update an event (faculty only)
+router.put(
+  "/:id",
+  authenticateToken,
+  async (
+    req: AuthRequest,
+    res: Response<EventResponse | ErrorResponse>
+  ): Promise<void> => {
+    try {
+      const user = req.user;
+      const eventId = req.params.id;
+
+      // Only faculty can update events
+      if (!user || user.role !== "faculty") {
+        res.status(403).json({ error: "Only faculty can update events" });
+        return;
+      }
+
+      const event = await Event.findById(eventId);
+      if (!event) {
+        res.status(404).json({ error: "Event not found" });
+        return;
+      }
+
+      const { name, description, niche, venue, date, time, capacity, isActive } = req.body as {
+        name?: string;
+        description?: string;
+        niche?: EventNiche;
+        venue?: string;
+        date?: string;
+        time?: string;
+        capacity?: number;
+        isActive?: boolean;
+      };
+
+      // Update fields if provided
+      if (name) event.name = name;
+      if (description) event.description = description;
+      if (niche) event.niche = niche;
+      if (venue) event.venue = venue;
+      if (date) event.date = new Date(date);
+      if (time) event.time = time;
+      if (capacity) event.capacity = capacity;
+      if (typeof isActive === "boolean") event.isActive = isActive;
+
+      await event.save();
+
+      const participantCount = await Participation.countDocuments({
+        eventId: event._id,
+        status: { $ne: "cancelled" },
+      });
+
+      res.json({ event: event.toEventPayload(participantCount) });
+    } catch (error) {
+      console.error("Error updating event:", error);
+      res.status(500).json({ error: "Failed to update event" });
+    }
+  }
+);
 
 // Sync events from JSON file to database
 router.post(
@@ -257,6 +372,55 @@ router.get(
   }
 );
 
+// Get event participants (faculty only)
+router.get(
+  "/:id/participants",
+  authenticateToken,
+  async (
+    req: AuthRequest,
+    res: Response<{ participants: { _id: string; name: string; email: string; rollNumber?: string; status: string; selectedNiche: string }[] } | ErrorResponse>
+  ): Promise<void> => {
+    try {
+      const eventId = req.params.id;
+      const user = req.user;
+
+      // Only faculty can view participants
+      if (!user || user.role !== "faculty") {
+        res.status(403).json({ error: "Only faculty can view participants" });
+        return;
+      }
+
+      const participations = await Participation.find({
+        eventId,
+        status: { $ne: "cancelled" },
+      });
+
+      // Get participant details
+      const participants = await Promise.all(
+        participations.map(async (p) => {
+          const student = await Student.findById(p.participantId);
+          if (!student) return null;
+          return {
+            _id: student._id.toString(),
+            name: student.name,
+            email: student.email,
+            rollNumber: student.rollNumber,
+            status: p.status,
+            selectedNiche: p.selectedNiche,
+          };
+        })
+      );
+
+      res.json({
+        participants: participants.filter((p): p is NonNullable<typeof p> => p !== null),
+      });
+    } catch (error) {
+      console.error("Error fetching participants:", error);
+      res.status(500).json({ error: "Failed to fetch participants" });
+    }
+  }
+);
+
 // Mark attendance and award points (admin/faculty use)
 router.post(
   "/:id/attend/:participantId",
@@ -267,6 +431,7 @@ router.post(
   ): Promise<void> => {
     try {
       const { id: eventId, participantId } = req.params;
+      const { points } = req.body as { points?: number };
       const user = req.user;
 
       // Only faculty can mark attendance
@@ -289,14 +454,15 @@ router.post(
       participation.status = "attended";
       await participation.save();
 
-      // Award incentive points to students
+      // Award incentive points to students (default 10, or custom amount)
+      const pointsToAward = points && points > 0 ? points : 10;
       if (participation.participantType === "student") {
         await Student.findByIdAndUpdate(participantId, {
-          $inc: { incentivePoints: 10 }, // Award 10 points per event
+          $inc: { incentivePoints: pointsToAward },
         });
       }
 
-      res.json({ message: "Attendance marked and points awarded" });
+      res.json({ message: `Attendance marked and ${pointsToAward} points awarded` });
     } catch (error) {
       console.error("Error marking attendance:", error);
       res.status(500).json({ error: "Failed to mark attendance" });

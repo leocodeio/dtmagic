@@ -1,10 +1,18 @@
 import {
+  createEvent,
+  CreateEventData,
   Event,
   EventNiche,
+  EventParticipant,
+  getEventParticipants,
   getEvents,
   getMyParticipations,
+  getStoredUser,
+  markAttendance,
   participateInEvent,
   Participation,
+  updateEvent,
+  User
 } from "@/server/auth";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useCallback, useEffect, useState } from "react";
@@ -16,7 +24,8 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  View,
+  TextInput,
+  View
 } from "react-native";
 
 const NICHE_INFO: Record<EventNiche, { icon: keyof typeof MaterialCommunityIcons.glyphMap; color: string }> = {
@@ -27,19 +36,41 @@ const NICHE_INFO: Record<EventNiche, { icon: keyof typeof MaterialCommunityIcons
 };
 
 export default function EngagementTabScreen() {
+  const [user, setUser] = useState<User | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [participations, setParticipations] = useState<Participation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [registering, setRegistering] = useState(false);
+  // Faculty-specific state
+  const [managingEvent, setManagingEvent] = useState<Event | null>(null);
+  const [participants, setParticipants] = useState<EventParticipant[]>([]);
+  const [loadingParticipants, setLoadingParticipants] = useState(false);
+  const [markingAttendance, setMarkingAttendance] = useState<string | null>(null);
+  const [pointsInput, setPointsInput] = useState<Record<string, string>>({});
+  // Create/Edit event state
+  const [showCreateEvent, setShowCreateEvent] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [eventForm, setEventForm] = useState<CreateEventData>({
+    name: "",
+    description: "",
+    niche: "coding",
+    venue: "",
+    date: "",
+    time: "",
+    capacity: 50,
+  });
+  const [savingEvent, setSavingEvent] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
-      const [eventsData, participationsData] = await Promise.all([
+      const [storedUser, eventsData, participationsData] = await Promise.all([
+        getStoredUser(),
         getEvents(),
         getMyParticipations(),
       ]);
+      setUser(storedUser);
       setEvents(eventsData);
       setParticipations(participationsData);
     } catch (error) {
@@ -64,12 +95,122 @@ export default function EngagementTabScreen() {
     return participations.some((p) => p.eventId === eventId);
   };
 
+  const isFaculty = user?.role === "faculty";
+
   const handleEventPress = (event: Event) => {
+    if (isFaculty) {
+      // Faculty can manage events
+      handleManageEvent(event);
+      return;
+    }
     if (isRegistered(event._id)) {
       Alert.alert("Already Registered", "You are already registered for this event.");
       return;
     }
     setSelectedEvent(event);
+  };
+
+  const handleManageEvent = async (event: Event) => {
+    setManagingEvent(event);
+    setLoadingParticipants(true);
+    try {
+      const participantsList = await getEventParticipants(event._id);
+      setParticipants(participantsList);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load participants";
+      Alert.alert("Error", message);
+      setManagingEvent(null);
+    } finally {
+      setLoadingParticipants(false);
+    }
+  };
+
+  const handleMarkAttendance = async (participantId: string, participantName: string) => {
+    if (!managingEvent) return;
+    
+    const pointsStr = pointsInput[participantId] || "10";
+    const points = parseInt(pointsStr, 10) || 10;
+    
+    setMarkingAttendance(participantId);
+    try {
+      await markAttendance(managingEvent._id, participantId, points);
+      Alert.alert("Success!", `Attendance marked for ${participantName}. ${points} points awarded!`);
+      // Refresh participants list
+      const participantsList = await getEventParticipants(managingEvent._id);
+      setParticipants(participantsList);
+      // Clear points input for this participant
+      setPointsInput((prev) => {
+        const updated = { ...prev };
+        delete updated[participantId];
+        return updated;
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to mark attendance";
+      Alert.alert("Error", message);
+    } finally {
+      setMarkingAttendance(null);
+    }
+  };
+
+  const resetEventForm = () => {
+    setEventForm({
+      name: "",
+      description: "",
+      niche: "coding",
+      venue: "",
+      date: "",
+      time: "",
+      capacity: 50,
+    });
+  };
+
+  const handleCreateEvent = () => {
+    resetEventForm();
+    setEditingEvent(null);
+    setShowCreateEvent(true);
+  };
+
+  const handleEditEvent = () => {
+    if (!managingEvent) return;
+    setEventForm({
+      name: managingEvent.name,
+      description: managingEvent.description,
+      niche: managingEvent.niche,
+      venue: managingEvent.venue,
+      date: new Date(managingEvent.date).toISOString().split("T")[0],
+      time: managingEvent.time,
+      capacity: managingEvent.capacity,
+    });
+    setEditingEvent(managingEvent);
+    setManagingEvent(null);
+    setShowCreateEvent(true);
+  };
+
+  const handleSaveEvent = async () => {
+    if (!eventForm.name || !eventForm.description || !eventForm.venue || !eventForm.date || !eventForm.time) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
+
+    setSavingEvent(true);
+    try {
+      if (editingEvent) {
+        await updateEvent(editingEvent._id, eventForm);
+        Alert.alert("Success!", "Event updated successfully");
+      } else {
+        await createEvent(eventForm);
+        Alert.alert("Success!", "Event created successfully");
+      }
+      setShowCreateEvent(false);
+      setEditingEvent(null);
+      resetEventForm();
+      loadData();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to save event";
+      Alert.alert("Error", message);
+    } finally {
+      setSavingEvent(false);
+    }
   };
 
   const handleRegister = async (niche: EventNiche) => {
@@ -109,12 +250,6 @@ export default function EngagementTabScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Ionicons name="calendar" size={24} color="#ECEDEE" style={{ marginRight: 8 }} />
-        <Text style={styles.headerTitle}>Engagement</Text>
-      </View>
-
       {/* Event Selection Modal */}
       {selectedEvent && (
         <View style={styles.modalOverlay}>
@@ -159,6 +294,220 @@ export default function EngagementTabScreen() {
         </View>
       )}
 
+      {/* Faculty: Manage Event Modal */}
+      {managingEvent && (
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modal, { maxHeight: "85%" }]}>
+            <Text style={styles.modalTitle}>Manage Event</Text>
+            <Text style={styles.modalSubtitle}>{managingEvent.name}</Text>
+            
+            {/* Event Info */}
+            <View style={styles.eventInfoSection}>
+              <View style={styles.eventInfoRow}>
+                <Ionicons name="location-outline" size={14} color="#9BA1A6" />
+                <Text style={styles.eventInfoText}>{managingEvent.venue}</Text>
+              </View>
+              <View style={styles.eventInfoRow}>
+                <Ionicons name="calendar-outline" size={14} color="#9BA1A6" />
+                <Text style={styles.eventInfoText}>{formatDate(managingEvent.date)}</Text>
+              </View>
+              <View style={styles.eventInfoRow}>
+                <Ionicons name="time-outline" size={14} color="#9BA1A6" />
+                <Text style={styles.eventInfoText}>{managingEvent.time}</Text>
+              </View>
+            </View>
+
+            {/* Edit Event Button */}
+            <Pressable style={styles.editEventButton} onPress={handleEditEvent}>
+              <Ionicons name="create-outline" size={16} color="#fff" />
+              <Text style={styles.editEventButtonText}>Edit Event Details</Text>
+            </Pressable>
+
+            <Text style={[styles.participantsTitle, { marginTop: 16 }]}>Participants</Text>
+
+            {loadingParticipants ? (
+              <ActivityIndicator size="large" color="#007AFF" style={{ marginVertical: 20 }} />
+            ) : participants.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>No participants yet</Text>
+              </View>
+            ) : (
+              <ScrollView style={{ maxHeight: 250 }}>
+                {participants.map((participant) => (
+                  <View key={participant._id} style={styles.participantCard}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.participantName}>{participant.name}</Text>
+                      <Text style={styles.participantInfo}>
+                        {participant.rollNumber} • {participant.selectedNiche}
+                      </Text>
+                    </View>
+                    {participant.status === "attended" ? (
+                      <View style={styles.attendedBadge}>
+                        <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                        <Text style={styles.attendedText}>Done</Text>
+                      </View>
+                    ) : (
+                      <View style={styles.attendanceActions}>
+                        <TextInput
+                          style={styles.pointsInput}
+                          placeholder="10"
+                          placeholderTextColor="#666"
+                          keyboardType="numeric"
+                          value={pointsInput[participant._id] || ""}
+                          onChangeText={(text) => setPointsInput(prev => ({ ...prev, [participant._id]: text }))}
+                        />
+                        <Pressable
+                          style={styles.markAttendanceButton}
+                          onPress={() => handleMarkAttendance(participant._id, participant.name)}
+                          disabled={markingAttendance === participant._id}
+                        >
+                          {markingAttendance === participant._id ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                          ) : (
+                            <>
+                              <Ionicons name="star" size={14} color="#fff" />
+                              <Text style={styles.markAttendanceText}>Award</Text>
+                            </>
+                          )}
+                        </Pressable>
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+
+            <Pressable
+              style={styles.cancelButton}
+              onPress={() => {
+                setManagingEvent(null);
+                setParticipants([]);
+                setPointsInput({});
+              }}
+            >
+              <Text style={styles.cancelButtonText}>Close</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+
+      {/* Faculty: Create/Edit Event Modal */}
+      {showCreateEvent && (
+        <View style={styles.modalOverlay}>
+          <ScrollView style={styles.createEventModal}>
+            <Text style={styles.modalTitle}>
+              {editingEvent ? "Edit Event" : "Create Event"}
+            </Text>
+
+            <Text style={styles.inputLabel}>Event Name</Text>
+            <TextInput
+              style={styles.formInput}
+              placeholder="Enter event name"
+              placeholderTextColor="#666"
+              value={eventForm.name}
+              onChangeText={(text: string) => setEventForm(prev => ({ ...prev, name: text }))}
+            />
+
+            <Text style={styles.inputLabel}>Description</Text>
+            <TextInput
+              style={[styles.formInput, { height: 80, textAlignVertical: "top" }]}
+              placeholder="Enter description"
+              placeholderTextColor="#666"
+              multiline
+              value={eventForm.description}
+              onChangeText={(text: string) => setEventForm(prev => ({ ...prev, description: text }))}
+            />
+
+            <Text style={styles.inputLabel}>Niche</Text>
+            <View style={styles.nicheSelector}>
+              {(Object.keys(NICHE_INFO) as EventNiche[]).map((niche) => (
+                <Pressable
+                  key={niche}
+                  style={[
+                    styles.nicheSelectorButton,
+                    eventForm.niche === niche && { backgroundColor: NICHE_INFO[niche].color },
+                  ]}
+                  onPress={() => setEventForm(prev => ({ ...prev, niche }))}
+                >
+                  <MaterialCommunityIcons 
+                    name={NICHE_INFO[niche].icon} 
+                    size={20} 
+                    color={eventForm.niche === niche ? "#fff" : "#9BA1A6"} 
+                  />
+                </Pressable>
+              ))}
+            </View>
+
+            <Text style={styles.inputLabel}>Venue</Text>
+            <TextInput
+              style={styles.formInput}
+              placeholder="Enter venue"
+              placeholderTextColor="#666"
+              value={eventForm.venue}
+              onChangeText={(text: string) => setEventForm(prev => ({ ...prev, venue: text }))}
+            />
+
+            <View style={styles.formRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.inputLabel}>Date</Text>
+                <TextInput
+                  style={styles.formInput}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor="#666"
+                  value={eventForm.date}
+                  onChangeText={(text: string) => setEventForm(prev => ({ ...prev, date: text }))}
+                />
+              </View>
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={styles.inputLabel}>Time</Text>
+                <TextInput
+                  style={styles.formInput}
+                  placeholder="e.g. 3:00 PM"
+                  placeholderTextColor="#666"
+                  value={eventForm.time}
+                  onChangeText={(text: string) => setEventForm(prev => ({ ...prev, time: text }))}
+                />
+              </View>
+            </View>
+
+            <Text style={styles.inputLabel}>Capacity</Text>
+            <TextInput
+              style={styles.formInput}
+              placeholder="50"
+              placeholderTextColor="#666"
+              keyboardType="numeric"
+              value={String(eventForm.capacity)}
+              onChangeText={(text: string) => setEventForm(prev => ({ ...prev, capacity: parseInt(text, 10) || 0 }))}
+            />
+
+            <Pressable
+              style={[styles.saveEventButton, savingEvent && { opacity: 0.7 }]}
+              onPress={handleSaveEvent}
+              disabled={savingEvent}
+            >
+              {savingEvent ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.saveEventButtonText}>
+                  {editingEvent ? "Update Event" : "Create Event"}
+                </Text>
+              )}
+            </Pressable>
+
+            <Pressable
+              style={styles.cancelButton}
+              onPress={() => {
+                setShowCreateEvent(false);
+                setEditingEvent(null);
+                resetEventForm();
+              }}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </Pressable>
+          </ScrollView>
+        </View>
+      )}
+
       {/* Events List */}
       <ScrollView
         style={styles.eventsContainer}
@@ -166,12 +515,25 @@ export default function EngagementTabScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
+        {/* Create Event Button - Faculty Only */}
+        {isFaculty && (
+          <Pressable style={styles.createEventButton} onPress={handleCreateEvent}>
+            <Ionicons name="add-circle" size={24} color="#fff" />
+            <Text style={styles.createEventButtonText}>Create New Event</Text>
+          </Pressable>
+        )}
+
         <View style={styles.sectionHeader}>
           <Ionicons name="calendar-outline" size={20} color="#ECEDEE" />
-          <Text style={styles.sectionTitle}>Upcoming Events</Text>
+          <Text style={styles.sectionTitle}>
+            {isFaculty ? "Manage Events" : "Upcoming Events"}
+          </Text>
         </View>
         <Text style={styles.sectionSubtitle}>
-          Tap on an event to register your interest
+          {isFaculty 
+            ? "Tap on an event to view participants and assign incentives"
+            : "Tap on an event to register your interest"
+          }
         </Text>
 
         {events.length === 0 ? (
@@ -189,7 +551,7 @@ export default function EngagementTabScreen() {
             return (
               <Pressable
                 key={event._id}
-                style={[styles.eventCard, registered && styles.eventCardRegistered]}
+                style={[styles.eventCard, !isFaculty && registered && styles.eventCardRegistered]}
                 onPress={() => handleEventPress(event)}
               >
                 <View style={styles.eventHeader}>
@@ -202,12 +564,17 @@ export default function EngagementTabScreen() {
                     <MaterialCommunityIcons name={nicheInfo.icon} size={14} color="#fff" style={{ marginRight: 4 }} />
                     <Text style={styles.nicheBadgeText}>{event.niche}</Text>
                   </View>
-                  {registered && (
+                  {isFaculty ? (
+                    <View style={[styles.manageBadge, { flexDirection: "row", alignItems: "center" }]}>
+                      <Ionicons name="settings-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
+                      <Text style={styles.registeredBadgeText}>Manage</Text>
+                    </View>
+                  ) : registered ? (
                     <View style={[styles.registeredBadge, { flexDirection: "row", alignItems: "center" }]}>
                       <Ionicons name="checkmark-circle" size={14} color="#fff" style={{ marginRight: 4 }} />
                       <Text style={styles.registeredBadgeText}>Registered</Text>
                     </View>
-                  )}
+                  ) : null}
                 </View>
 
                 <Text style={styles.eventName}>{event.name}</Text>
@@ -215,23 +582,23 @@ export default function EngagementTabScreen() {
 
                 <View style={styles.eventDetails}>
                   <View style={styles.eventDetailItem}>
-                    <Ionicons name="location-outline" size={14} color="#666" style={{ marginRight: 4 }} />
+                    <Ionicons name="location-outline" size={14} color="#9BA1A6" style={{ marginRight: 4 }} />
                     <Text style={styles.eventDetailText}>{event.venue}</Text>
                   </View>
                   <View style={styles.eventDetailItem}>
-                    <Ionicons name="calendar-outline" size={14} color="#666" style={{ marginRight: 4 }} />
+                    <Ionicons name="calendar-outline" size={14} color="#9BA1A6" style={{ marginRight: 4 }} />
                     <Text style={styles.eventDetailText}>
                       {formatDate(event.date)}
                     </Text>
                   </View>
                   <View style={styles.eventDetailItem}>
-                    <Ionicons name="time-outline" size={14} color="#666" style={{ marginRight: 4 }} />
+                    <Ionicons name="time-outline" size={14} color="#9BA1A6" style={{ marginRight: 4 }} />
                     <Text style={styles.eventDetailText}>{event.time}</Text>
                   </View>
                 </View>
 
                 <View style={[styles.eventFooter, { flexDirection: "row", alignItems: "center" }]}>
-                  <Ionicons name="people-outline" size={14} color="#888" style={{ marginRight: 4 }} />
+                  <Ionicons name="people-outline" size={14} color="#9BA1A6" style={{ marginRight: 4 }} />
                   <Text style={styles.capacityText}>
                     {event.participantCount || 0} / {event.capacity} spots
                   </Text>
@@ -241,8 +608,8 @@ export default function EngagementTabScreen() {
           })
         )}
 
-        {/* My Registrations */}
-        {participations.length > 0 && (
+        {/* My Registrations - only for students */}
+        {!isFaculty && participations.length > 0 && (
           <>
             <View style={[styles.sectionHeader, { marginTop: 32 }]}>
               <Ionicons name="checkmark-done-circle" size={20} color="#4CAF50" />
@@ -296,25 +663,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#9BA1A6",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    backgroundColor: "#1e2022",
-    borderBottomWidth: 1,
-    borderBottomColor: "#333",
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#ECEDEE",
-  },
   eventsContainer: {
     flex: 1,
     padding: 20,
+    paddingTop: 60,
   },
   sectionTitle: {
     fontSize: 20,
@@ -386,6 +738,12 @@ const styles = StyleSheet.create({
   },
   registeredBadge: {
     backgroundColor: "#4CAF50",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  manageBadge: {
+    backgroundColor: "#007AFF",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -524,5 +882,173 @@ const styles = StyleSheet.create({
   },
   registeringIndicator: {
     marginTop: 12,
+  },
+  // Faculty participant management styles
+  participantCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#252829",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+  },
+  participantName: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#ECEDEE",
+  },
+  participantInfo: {
+    fontSize: 13,
+    color: "#9BA1A6",
+    marginTop: 2,
+  },
+  attendedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1a3d2e",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  attendedText: {
+    color: "#4CAF50",
+    fontSize: 12,
+    fontWeight: "600",
+    marginLeft: 4,
+  },
+  markAttendanceButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FF9800",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  markAttendanceText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
+    marginLeft: 4,
+  },
+  // Event info styles in manage modal
+  eventInfoSection: {
+    backgroundColor: "#252829",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+  },
+  eventInfoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 4,
+  },
+  eventInfoText: {
+    color: "#9BA1A6",
+    fontSize: 13,
+    marginLeft: 8,
+  },
+  editEventButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#007AFF",
+    borderRadius: 8,
+    padding: 12,
+  },
+  editEventButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    marginLeft: 6,
+  },
+  participantsTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#ECEDEE",
+    marginBottom: 12,
+  },
+  attendanceActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  pointsInput: {
+    backgroundColor: "#1e2022",
+    borderWidth: 1,
+    borderColor: "#333",
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    width: 50,
+    color: "#ECEDEE",
+    fontSize: 14,
+    textAlign: "center",
+  },
+  // Create/Edit event modal styles
+  createEventModal: {
+    backgroundColor: "#1e2022",
+    borderRadius: 16,
+    padding: 24,
+    width: "90%",
+    maxWidth: 400,
+    maxHeight: "90%",
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#9BA1A6",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  formInput: {
+    backgroundColor: "#252829",
+    borderWidth: 1,
+    borderColor: "#333",
+    borderRadius: 8,
+    padding: 12,
+    color: "#ECEDEE",
+    fontSize: 15,
+  },
+  formRow: {
+    flexDirection: "row",
+  },
+  nicheSelector: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  nicheSelectorButton: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#252829",
+    borderRadius: 8,
+    padding: 12,
+  },
+  saveEventButton: {
+    backgroundColor: "#4CAF50",
+    borderRadius: 8,
+    padding: 14,
+    alignItems: "center",
+    marginTop: 24,
+  },
+  saveEventButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  createEventButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#4CAF50",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+  },
+  createEventButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+    marginLeft: 8,
   },
 });

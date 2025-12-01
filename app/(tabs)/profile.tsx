@@ -51,12 +51,6 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Ionicons name="person-circle" size={24} color="#ECEDEE" style={{ marginRight: 8 }} />
-        <Text style={styles.headerTitle}>Profile</Text>
-      </View>
-
       {/* Avatar Section */}
       <View style={styles.avatarSection}>
         <View style={styles.avatar}>
@@ -155,25 +149,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#151718",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    backgroundColor: "#1e2022",
-    borderBottomWidth: 1,
-    borderBottomColor: "#333",
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#ECEDEE",
-  },
   avatarSection: {
     alignItems: "center",
     paddingVertical: 32,
+    paddingTop: 80,
     backgroundColor: "#1e2022",
     marginBottom: 20,
   },

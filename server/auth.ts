@@ -341,6 +341,122 @@ export async function getMyParticipations(): Promise<Participation[]> {
   }
 }
 
+/** Event participant data structure */
+export interface EventParticipant {
+  _id: string;
+  name: string;
+  email: string;
+  rollNumber?: string;
+  status: "registered" | "attended";
+  selectedNiche: EventNiche;
+}
+
+/**
+ * Get participants for an event (faculty only)
+ * @param eventId - Event ID
+ * @returns List of participants
+ */
+export async function getEventParticipants(eventId: string): Promise<EventParticipant[]> {
+  try {
+    const response = await axiosInstance.get<{ participants: EventParticipant[] }>(
+      `/api/events/${eventId}/participants`
+    );
+    return response.data.participants;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      if (axiosError.response?.data?.error) {
+        throw new Error(axiosError.response.data.error);
+      }
+    }
+    throw new Error("Failed to fetch participants");
+  }
+}
+
+/**
+ * Mark attendance for a participant (faculty only)
+ * @param eventId - Event ID
+ * @param participantId - Participant ID
+ * @param points - Optional custom points to award (default 10)
+ */
+export async function markAttendance(eventId: string, participantId: string, points?: number): Promise<void> {
+  try {
+    await axiosInstance.post(`/api/events/${eventId}/attend/${participantId}`, { points });
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      if (axiosError.response?.data?.error) {
+        throw new Error(axiosError.response.data.error);
+      }
+    }
+    throw new Error("Failed to mark attendance");
+  }
+}
+
+/** Create event data structure */
+export interface CreateEventData {
+  name: string;
+  description: string;
+  niche: EventNiche;
+  venue: string;
+  date: string;
+  time: string;
+  capacity: number;
+}
+
+/** Update event data structure */
+export interface UpdateEventData {
+  name?: string;
+  description?: string;
+  niche?: EventNiche;
+  venue?: string;
+  date?: string;
+  time?: string;
+  capacity?: number;
+  isActive?: boolean;
+}
+
+/**
+ * Create a new event (faculty only)
+ * @param eventData - Event data
+ * @returns Created event
+ */
+export async function createEvent(eventData: CreateEventData): Promise<Event> {
+  try {
+    const response = await axiosInstance.post<{ event: Event }>("/api/events", eventData);
+    return response.data.event;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      if (axiosError.response?.data?.error) {
+        throw new Error(axiosError.response.data.error);
+      }
+    }
+    throw new Error("Failed to create event");
+  }
+}
+
+/**
+ * Update an event (faculty only)
+ * @param eventId - Event ID
+ * @param eventData - Updated event data
+ * @returns Updated event
+ */
+export async function updateEvent(eventId: string, eventData: UpdateEventData): Promise<Event> {
+  try {
+    const response = await axiosInstance.put<{ event: Event }>(`/api/events/${eventId}`, eventData);
+    return response.data.event;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      if (axiosError.response?.data?.error) {
+        throw new Error(axiosError.response.data.error);
+      }
+    }
+    throw new Error("Failed to update event");
+  }
+}
+
 // ============================================
 // Incentives Functions
 // ============================================
