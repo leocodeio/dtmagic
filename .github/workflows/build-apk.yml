@@ -37,6 +37,8 @@ jobs:
 
       - name: Generate native Android project
         run: npx expo prebuild --platform android --clean
+        env:
+          EXPO_PUBLIC_API_URL: https://dtmagic.vercel.app
 
       - name: Build APK with Gradle
         working-directory: android
