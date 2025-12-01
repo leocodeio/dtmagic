@@ -21,6 +21,20 @@ app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/incentives", incentiveRoutes);
 
+// Welcome endpoint
+app.get("/", (_req: Request, res: Response): void => {
+  res.json({
+    message: "Welcome to DTMagic API",
+    version: "1.0.0",
+    endpoints: {
+      auth: "/api/auth",
+      events: "/api/events",
+      incentives: "/api/incentives",
+      health: "/api/health",
+    },
+  });
+});
+
 // Health check endpoint
 app.get(
   "/api/health",
