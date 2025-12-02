@@ -1,12 +1,13 @@
 import axios, {
-    AxiosError,
-    AxiosResponse,
-    InternalAxiosRequestConfig,
+  AxiosError,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
 } from "axios";
 import { getToken } from "../server/session";
 
-// Base URL for the API - change this based on your environment
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+// Base URL for the API - Expo CLI inlines EXPO_PUBLIC_* vars at build time
+const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_URL || "https://dtmagic.vercel.app";
 
 // Create axios instance with default config
 const axiosInstance = axios.create({
